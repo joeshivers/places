@@ -1,0 +1,2768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#3b82f6">
+    <title>p l a c e s</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+        /* Base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        /* Stats display */
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #3b82f6;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: #475569;
+        }
+
+        .nav-btn:hover {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            transform: translateY(-1px);
+        }
+
+        .nav-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        /* Restaurant table */
+        .restaurant-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        /* Filters */
+        .filters {
+            background: #f8fafc;
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            display: none;
+        }
+
+        .filters.show {
+            display: block;
+        }
+
+        .filter-row {
+            margin-bottom: 15px;
+        }
+
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .filter-group {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 10px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .filter-group select {
+            padding: 6px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            font-size: 14px;
+            min-width: 150px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            background: white;
+            border: 1px solid #d1d5db;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .toggle-filters-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 15px;
+        }
+
+        .clear-filters-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 4px;
+        }
+
+        /* Restaurant items */
+        .restaurant-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 20px;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .restaurant-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .restaurant-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .restaurant-name {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1f2937;
+            flex-grow: 1;
+        }
+
+        .restaurant-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .like-btn, .status-btn {
+            background: none;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .like-btn:hover, .status-btn:hover {
+            background-color: #f9fafb;
+            border-color: #9ca3af;
+        }
+
+        .like-btn.liked {
+            background-color: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .restaurant-details {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .location {
+            font-weight: 500;
+            color: #4b5563;
+            font-size: 0.9rem;
+        }
+
+        .borough {
+            color: #1f2937;
+            font-weight: 600;
+        }
+
+        .cuisines, .types, .what-to-order, .happy-hour, .notes {
+            font-size: 0.9rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        .website a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .website a:hover {
+            text-decoration: underline;
+        }
+
+        /* Edit button */
+        .edit-restaurant-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .edit-restaurant-btn:hover {
+            background: #2563eb;
+        }
+
+        /* Form styles */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .form-group input, 
+        .form-group select, 
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus, 
+        .form-group select:focus, 
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background: white;
+            border-radius: 8px;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-button:hover {
+            background-color: #f0f0f0;
+            border-radius: 4px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4b5563;
+        }
+
+        .add-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .add-btn:hover {
+            background: #059669;
+        }
+
+        /* Utility classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+
+        .no-results, .error {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .error {
+            color: #ef4444;
+        }
+
+        #results-count {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        /* Map styles */
+        .map-container {
+            height: 500px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .map-controls {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .map-info {
+            margin-bottom: 15px;
+        }
+
+        .map-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+                gap: 10px;
+            }
+
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .nav {
+                gap: 8px;
+                margin-bottom: 15px;
+            }
+
+            .nav-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                flex: 1;
+                text-align: center;
+                min-width: 0;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .restaurant-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .restaurant-actions {
+                align-self: flex-end;
+                width: 100%;
+                justify-content: flex-end;
+            }
+
+            .restaurant-name {
+                font-size: 1.1rem;
+            }
+
+            .modal-content {
+                margin: 10px;
+                max-width: calc(100vw - 20px);
+                max-height: calc(100vh - 20px);
+            }
+            
+            .restaurant-table {
+                padding: 15px !important;
+            }
+
+            .filter-group {
+                display: block;
+                margin-right: 0;
+                margin-bottom: 15px;
+                width: 100%;
+            }
+
+            .filter-group select {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .filter-buttons {
+                justify-content: center;
+                gap: 6px;
+            }
+
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+
+            .happy-hour-details {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .happy-hour-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .happy-hour-restaurant-name {
+                font-size: 1.1rem;
+            }
+
+            .day-tags {
+                justify-content: flex-start;
+            }
+
+            .location-method {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+
+            .location-method button {
+                width: 100%;
+            }
+
+            /* Larger touch targets for mobile */
+            .like-btn, .status-btn, .edit-restaurant-btn {
+                min-height: 44px;
+                min-width: 44px;
+                padding: 8px 12px;
+            }
+
+            /* Better form inputs for mobile */
+            .form-group input, 
+            .form-group select, 
+            .form-group textarea {
+                padding: 12px;
+                font-size: 16px; /* Prevents zoom on iOS */
+                border-radius: 8px;
+            }
+
+            /* Mobile-optimized toggles */
+            .toggle-filters-btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Sticky navigation on mobile */
+            .nav {
+                position: sticky;
+                top: 0;
+                background: #f8fafc;
+                z-index: 100;
+                padding: 10px 0;
+                margin: 0 -10px 15px -10px;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
+            /* Mobile map adjustments */
+            .map-container {
+                height: 400px;
+            }
+
+            /* Better mobile modal */
+            .modal {
+                padding: 0;
+            }
+
+            .modal-content {
+                border-radius: 0;
+                max-height: 100vh;
+                margin: 0;
+                width: 100vw;
+            }
+
+            /* Mobile-friendly buttons */
+            .btn {
+                padding: 12px 20px;
+                font-size: 16px;
+                min-height: 44px;
+            }
+        }
+
+        /* Extra small screens (phones in portrait) */
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+
+            .restaurant-item {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+
+            .happy-hour-item {
+                padding: 15px;
+                margin-bottom: 10px;
+            }
+
+            .stats-card {
+                padding: 15px;
+            }
+
+            .restaurant-table {
+                padding: 10px !important;
+            }
+
+            .nav-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+
+        /* Landscape orientation optimizations */
+        @media (max-width: 768px) and (orientation: landscape) {
+            .nav {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+
+            .nav-btn {
+                flex: 0 1 auto;
+                min-width: 80px;
+            }
+
+            .modal-content {
+                max-height: 90vh;
+            }
+        }
+
+        /* Touch-specific improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .restaurant-item:hover {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                transform: none;
+            }
+
+            .happy-hour-item:hover {
+                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                transform: none;
+            }
+
+            .nav-btn:hover {
+                transform: none;
+            }
+
+            .filter-btn:hover {
+                background: #f3f4f6;
+            }
+        }
+
+        /* PWA-style full-screen on mobile */
+        @media (display-mode: standalone) {
+            .container {
+                padding-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>p l a c e s</h1>
+            
+            <div id="stats-display" class="stats-card hidden">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div id="total-restaurants" class="stat-number">-</div>
+                        <div class="stat-label">Total Restaurants</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="visited-restaurants" class="stat-number">-</div>
+                        <div class="stat-label">Visited</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="liked-restaurants" class="stat-number">-</div>
+                        <div class="stat-label">Liked</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav">
+                <button class="nav-btn active" onclick="showView('database')">Database</button>
+                <button class="nav-btn" onclick="showView('map')">Map</button>
+                <button class="nav-btn" onclick="showView('happyhour')">🍻 Happy Hour</button>
+                <button class="nav-btn" onclick="showView('add')">Add Restaurant</button>
+                <button class="nav-btn" onclick="showView('stats')">Statistics</button>
+            </div>
+        </div>
+
+        <div id="message-area"></div>
+
+        <!-- Database View -->
+        <div id="database-view">
+            <div class="restaurant-table" style="margin-bottom: 15px; padding: 20px;">
+                <button class="toggle-filters-btn" onclick="toggleFilters()">Show Filters</button>
+                
+                <div id="filters" class="filters">
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label>Cuisine:</label>
+                            <select id="cuisine-filter" onchange="applyFilters()">
+                                <option value="">All Cuisines</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Neighborhood:</label>
+                            <select id="neighborhood-filter" onchange="applyFilters()">
+                                <option value="">All Neighborhoods</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Borough:</label>
+                            <select id="borough-filter" onchange="applyFilters()">
+                                <option value="">All Boroughs</option>
+                                <option value="Manhattan">Manhattan</option>
+                                <option value="Brooklyn">Brooklyn</option>
+                                <option value="Queens">Queens</option>
+                                <option value="Bronx">Bronx</option>
+                                <option value="Staten Island">Staten Island</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>Type:</label>
+                            <select id="type-filter" onchange="applyFilters()">
+                                <option value="">All Types</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="status" data-value="">All Status</button>
+                            <button class="filter-btn" data-filter="status" data-value="Visited">Visited</button>
+                            <button class="filter-btn" data-filter="status" data-value="Unvisited">Unvisited</button>
+                            <button class="filter-btn active" data-filter="liked" data-value="">All Restaurants</button>
+                            <button class="filter-btn" data-filter="liked" data-value="true">❤️ Liked Only</button>
+                            <button class="filter-btn" data-filter="liked" data-value="false">♡ Not Liked</button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-row">
+                        <button class="clear-filters-btn" onclick="clearAllFilters()">Clear All</button>
+                    </div>
+                </div>
+
+                <div id="results-count"></div>
+            </div>
+
+            <div id="restaurants-list"></div>
+        </div>
+
+        <!-- Map View -->
+        <div id="map-view" class="hidden">
+            <div class="restaurant-table">
+                <div class="map-controls">
+                    <div class="map-info">
+                        <h2>Restaurant Map</h2>
+                        <div>
+                            <span id="map-count">Loading...</span>
+                            <button class="btn btn-secondary" onclick="findUserLocation()">📍 Find Me</button>
+                        </div>
+                    </div>
+                    
+                    <div class="map-filters">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label>Borough:</label>
+                                <select id="map-borough-filter" onchange="applyMapFilters()">
+                                    <option value="">All Boroughs</option>
+                                    <option value="Manhattan">Manhattan</option>
+                                    <option value="Brooklyn">Brooklyn</option>
+                                    <option value="Queens">Queens</option>
+                                    <option value="Bronx">Bronx</option>
+                                    <option value="Staten Island">Staten Island</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Cuisine:</label>
+                                <select id="map-cuisine-filter" onchange="applyMapFilters()">
+                                    <option value="">All Cuisines</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-filter="status" data-value="" onclick="handleMapFilterClick(this)">All Status</button>
+                                <button class="filter-btn" data-filter="status" data-value="Visited" onclick="handleMapFilterClick(this)">Visited</button>
+                                <button class="filter-btn" data-filter="status" data-value="Unvisited" onclick="handleMapFilterClick(this)">Unvisited</button>
+                                <button class="filter-btn active" data-filter="liked" data-value="" onclick="handleMapFilterClick(this)">All Restaurants</button>
+                                <button class="filter-btn" data-filter="liked" data-value="true" onclick="handleMapFilterClick(this)">❤️ Liked Only</button>
+                                <button class="filter-btn" data-filter="liked" data-value="false" onclick="handleMapFilterClick(this)">♡ Not Liked</button>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <button class="clear-filters-btn" onclick="clearMapFilters()">Clear Filters</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="restaurant-map" class="map-container"></div>
+            </div>
+        </div>
+
+        <!-- Happy Hour View -->
+        <div id="happyhour-view" class="hidden">
+            <div class="restaurant-table">
+                <div class="happy-hour-header" style="padding: 20px; border-bottom: 1px solid #e2e8f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <div>
+                            <h2>🍻 Happy Hour Guide</h2>
+                            <div id="current-time" style="color: #6b7280; font-size: 14px;"></div>
+                        </div>
+                        <div id="happening-now-count" style="background: #ef4444; color: white; padding: 8px 16px; border-radius: 20px; font-weight: 500;">
+                            Loading...
+                        </div>
+                    </div>
+                    
+                    <div class="happy-hour-filters">
+                        <div class="filter-row">
+                            <div class="filter-group">
+                                <label>Day:</label>
+                                <select id="day-filter" onchange="applyHappyHourFilters()">
+                                    <option value="">All Days</option>
+                                    <option value="monday">Monday</option>
+                                    <option value="tuesday">Tuesday</option>
+                                    <option value="wednesday">Wednesday</option>
+                                    <option value="thursday">Thursday</option>
+                                    <option value="friday">Friday</option>
+                                    <option value="saturday">Saturday</option>
+                                    <option value="sunday">Sunday</option>
+                                    <option value="weekday">Weekdays</option>
+                                    <option value="weekend">Weekends</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Borough:</label>
+                                <select id="hh-borough-filter" onchange="applyHappyHourFilters()">
+                                    <option value="">All Boroughs</option>
+                                    <option value="Manhattan">Manhattan</option>
+                                    <option value="Brooklyn">Brooklyn</option>
+                                    <option value="Queens">Queens</option>
+                                    <option value="Bronx">Bronx</option>
+                                    <option value="Staten Island">Staten Island</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>Cuisine:</label>
+                                <select id="hh-cuisine-filter" onchange="applyHappyHourFilters()">
+                                    <option value="">All Cuisines</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <div class="filter-buttons">
+                                <button class="filter-btn active" data-filter="time" data-value="" onclick="handleHHFilterClick(this)">All Times</button>
+                                <button class="filter-btn" data-filter="time" data-value="now" onclick="handleHHFilterClick(this)">🔴 Happening Now</button>
+                                <button class="filter-btn" data-filter="time" data-value="soon" onclick="handleHHFilterClick(this)">🟡 Starting Soon</button>
+                                <button class="filter-btn" data-filter="time" data-value="today" onclick="handleHHFilterClick(this)">📅 Today</button>
+                                <button class="filter-btn active" data-filter="type" data-value="" onclick="handleHHFilterClick(this)">All Specials</button>
+                                <button class="filter-btn" data-filter="type" data-value="food" onclick="handleHHFilterClick(this)">🍕 Food</button>
+                                <button class="filter-btn" data-filter="type" data-value="drinks" onclick="handleHHFilterClick(this)">🍻 Drinks</button>
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <button class="clear-filters-btn" onclick="clearHappyHourFilters()">Clear All Filters</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="happy-hour-content" style="padding: 20px;">
+                    <div id="happy-hour-results-count" style="margin-bottom: 20px; font-weight: 500; color: #374151;"></div>
+                    <div id="happy-hour-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Restaurant View -->
+        <div id="add-view" class="hidden">
+            <div class="restaurant-table" style="padding: 20px;">
+                <h2>Add New Restaurant</h2>
+                
+                <form id="add-restaurant-form">
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="name">Name *</label>
+                            <input type="text" id="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="borough">Borough</label>
+                            <select id="borough">
+                                <option value="">Select Borough</option>
+                                <option value="Manhattan">Manhattan</option>
+                                <option value="Brooklyn">Brooklyn</option>
+                                <option value="Queens">Queens</option>
+                                <option value="Bronx">Bronx</option>
+                                <option value="Staten Island">Staten Island</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="neighborhood">Neighborhood</label>
+                            <input type="text" id="neighborhood">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="status">Status</label>
+                            <select id="status">
+                                <option value="Unvisited">Unvisited</option>
+                                <option value="Visited">Visited</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="types">Types (comma-separated)</label>
+                        <input type="text" id="types" placeholder="e.g., Fine Dining, Casual, Bar">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cuisines">Cuisines (comma-separated)</label>
+                        <input type="text" id="cuisines" placeholder="e.g., Italian, American, Asian">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>📍 Location (choose one method):</label>
+                        <div class="location-helper-section">
+                            <div class="location-method">
+                                <input type="text" id="address-input" placeholder="Enter address: '123 Main St, Brooklyn, NY' or restaurant name + neighborhood">
+                                <button type="button" id="geocode-btn" class="btn btn-secondary">📍 Get Coordinates</button>
+                            </div>
+                            <div class="location-divider"><span>OR</span></div>
+                            <div class="location-method">
+                                <input type="url" id="maps-link-input" placeholder="Paste Google Maps link (https://maps.google.com/...)">
+                                <button type="button" id="parse-link-btn" class="btn btn-secondary">📎 Parse Link</button>
+                            </div>
+                            <div class="location-divider"><span>OR enter manually below</span></div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="latitude">Latitude (manual)</label>
+                            <input type="number" id="latitude" step="any" placeholder="40.7128">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="longitude">Longitude (manual)</label>
+                            <input type="number" id="longitude" step="any" placeholder="-74.0060">
+                        </div>
+                    </div>
+                    
+                    <div id="location-status" style="padding: 8px; border-radius: 4px; margin-bottom: 10px; display: none;"></div>
+                    
+                    <div class="form-group">
+                        <label for="happy_hour">Happy Hour</label>
+                        <input type="text" id="happy_hour" placeholder="e.g., Mon-Fri 5-7pm">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="website">Website</label>
+                        <input type="url" id="website" placeholder="https://restaurant-website.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="what_to_order">What to Order</label>
+                        <textarea id="what_to_order" rows="3" placeholder="Recommended dishes..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="notes">Notes</label>
+                        <textarea id="notes" rows="3" placeholder="Additional notes..."></textarea>
+                    </div>
+                    
+                    <button type="submit" class="add-btn">Add Restaurant</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Statistics View -->
+        <div id="stats-view" class="hidden">
+            <div class="restaurant-table" style="padding: 20px;">
+                <h2>Database Statistics</h2>
+                <div id="detailed-stats" class="loading">Loading statistics...</div>
+            </div>
+        </div>
+
+        <!-- Edit Restaurant Modal -->
+        <div id="edit-modal" class="modal hidden">
+            <div class="modal-overlay"></div>
+            <div class="modal-content">
+                <div class="restaurant-table" style="padding: 20px; max-width: 600px; margin: 0 auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>Edit Restaurant</h2>
+                        <button id="close-edit-modal" class="close-button">&times;</button>
+                    </div>
+                    
+                    <form id="edit-restaurant-form">
+                        <input type="hidden" id="edit-restaurant-id">
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="edit-name">Name *</label>
+                                <input type="text" id="edit-name" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-borough">Borough</label>
+                                <select id="edit-borough">
+                                    <option value="">Select Borough</option>
+                                    <option value="Manhattan">Manhattan</option>
+                                    <option value="Brooklyn">Brooklyn</option>
+                                    <option value="Queens">Queens</option>
+                                    <option value="Bronx">Bronx</option>
+                                    <option value="Staten Island">Staten Island</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-neighborhood">Neighborhood</label>
+                                <input type="text" id="edit-neighborhood">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-status">Status</label>
+                                <select id="edit-status">
+                                    <option value="Unvisited">Unvisited</option>
+                                    <option value="Visited">Visited</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-types">Types (comma-separated)</label>
+                            <input type="text" id="edit-types" placeholder="e.g., Fine Dining, Casual, Bar">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-cuisines">Cuisines (comma-separated)</label>
+                            <input type="text" id="edit-cuisines" placeholder="e.g., Italian, American, Asian">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>📍 Location (choose one method):</label>
+                            <div class="location-helper-section">
+                                <div class="location-method">
+                                    <input type="text" id="edit-address-input" placeholder="Enter address or restaurant name + neighborhood">
+                                    <button type="button" id="edit-geocode-btn" class="btn btn-secondary">📍 Get Coordinates</button>
+                                </div>
+                                <div class="location-divider"><span>OR</span></div>
+                                <div class="location-method">
+                                    <input type="url" id="edit-maps-link-input" placeholder="Paste Google Maps link">
+                                    <button type="button" id="edit-parse-link-btn" class="btn btn-secondary">📎 Parse Link</button>
+                                </div>
+                                <div class="location-divider"><span>OR enter manually below</span></div>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="edit-latitude">Latitude (manual)</label>
+                                <input type="number" id="edit-latitude" step="any" placeholder="40.7128">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="edit-longitude">Longitude (manual)</label>
+                                <input type="number" id="edit-longitude" step="any" placeholder="-74.0060">
+                            </div>
+                        </div>
+                        
+                        <div id="edit-location-status" style="padding: 8px; border-radius: 4px; margin-bottom: 10px; display: none;"></div>
+                        
+                        <div class="form-group">
+                            <label for="edit-happy-hour">Happy Hour</label>
+                            <input type="text" id="edit-happy-hour" placeholder="e.g., Mon-Fri 5-7pm">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-website">Website</label>
+                            <input type="url" id="edit-website" placeholder="https://restaurant-website.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-what-to-order">What to Order</label>
+                            <textarea id="edit-what-to-order" rows="3" placeholder="Recommended dishes..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="edit-notes">Notes</label>
+                            <textarea id="edit-notes" rows="3" placeholder="Additional notes..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="edit-liked"> ❤️ Liked
+                            </label>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="submit" class="btn btn-primary">Update Restaurant</button>
+                            <button type="button" id="delete-restaurant" class="btn btn-danger">Delete Restaurant</button>
+                            <button type="button" id="cancel-edit" class="btn btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        // Restaurant App Core Functionality
+        class RestaurantApp {
+            constructor() {
+                this.currentFilters = {};
+                this.currentView = 'database';
+                this.restaurants = [];
+                this.map = null;
+                this.mapMarkers = [];
+                this.happyHourFilters = {};
+                this.timeUpdateInterval = null;
+                this.init();
+            }
+
+            async init() {
+                // Load initial data
+                await this.loadStats();
+                await this.loadFilterOptions();
+                await this.loadRestaurants();
+                
+                // Set up event listeners
+                this.setupEventListeners();
+                
+                // Show stats if we have restaurants
+                if (this.restaurants.length > 0) {
+                    document.getElementById('stats-display').classList.remove('hidden');
+                }
+            }
+
+            setupEventListeners() {
+                // Add restaurant form
+                document.getElementById('add-restaurant-form')?.addEventListener('submit', (e) => this.handleAddRestaurant(e));
+                
+                // Filter buttons
+                document.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('filter-btn')) {
+                        this.handleFilterClick(e.target);
+                    }
+                });
+
+                // Location helper buttons
+                document.getElementById('geocode-btn')?.addEventListener('click', () => this.geocodeAddress());
+                document.getElementById('parse-link-btn')?.addEventListener('click', () => this.parseGoogleMapsLink());
+            }
+
+            async loadFilterOptions() {
+                try {
+                    // Load cuisines
+                    const cuisinesResponse = await fetch('/api/cuisines');
+                    const cuisines = await cuisinesResponse.json();
+                    const cuisineSelect = document.getElementById('cuisine-filter');
+                    const mapCuisineSelect = document.getElementById('map-cuisine-filter');
+                    cuisines.forEach(cuisine => {
+                        const option = document.createElement('option');
+                        option.value = cuisine.name;
+                        option.textContent = cuisine.name;
+                        cuisineSelect.appendChild(option);
+                        
+                        // Also add to map filter
+                        const mapOption = document.createElement('option');
+                        mapOption.value = cuisine.name;
+                        mapOption.textContent = cuisine.name;
+                        mapCuisineSelect.appendChild(mapOption);
+                    });
+
+                    // Also add to happy hour filter
+                    const hhCuisineSelect = document.getElementById('hh-cuisine-filter');
+                    cuisines.forEach(cuisine => {
+                        const hhOption = document.createElement('option');
+                        hhOption.value = cuisine.name;
+                        hhOption.textContent = cuisine.name;
+                        hhCuisineSelect.appendChild(hhOption);
+                    });
+
+                    // Load neighborhoods
+                    const neighborhoodsResponse = await fetch('/api/neighborhoods');
+                    const neighborhoods = await neighborhoodsResponse.json();
+                    const neighborhoodSelect = document.getElementById('neighborhood-filter');
+                    neighborhoods.forEach(neighborhood => {
+                        const option = document.createElement('option');
+                        option.value = neighborhood;
+                        option.textContent = neighborhood;
+                        neighborhoodSelect.appendChild(option);
+                    });
+
+                    // Load types
+                    const typesResponse = await fetch('/api/types');
+                    const types = await typesResponse.json();
+                    const typeSelect = document.getElementById('type-filter');
+                    types.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.name;
+                        option.textContent = type.name;
+                        typeSelect.appendChild(option);
+                    });
+
+                } catch (error) {
+                    console.error('Error loading filter options:', error);
+                }
+            }
+
+            async loadStats() {
+                try {
+                    const response = await fetch('/api/stats');
+                    const stats = await response.json();
+                    
+                    document.getElementById('total-restaurants').textContent = stats.total_restaurants || 0;
+                    document.getElementById('visited-restaurants').textContent = stats.visited_restaurants || 0;
+                    document.getElementById('liked-restaurants').textContent = stats.liked_restaurants || 0;
+                } catch (error) {
+                    console.error('Error loading stats:', error);
+                }
+            }
+
+            async loadRestaurants() {
+                try {
+                    const queryParams = new URLSearchParams();
+                    Object.keys(this.currentFilters).forEach(key => {
+                        if (this.currentFilters[key]) {
+                            queryParams.append(key, this.currentFilters[key]);
+                        }
+                    });
+                    
+                    const response = await fetch(`/api/restaurants?${queryParams}`);
+                    this.restaurants = await response.json();
+                    
+                    this.renderRestaurants();
+                    this.updateResultsCount();
+                } catch (error) {
+                    console.error('Error loading restaurants:', error);
+                    document.getElementById('restaurants-list').innerHTML = '<div class="error">Error loading restaurants</div>';
+                }
+            }
+
+            renderRestaurants() {
+                const restaurantsList = document.getElementById('restaurants-list');
+                
+                if (this.restaurants.length === 0) {
+                    restaurantsList.innerHTML = '<div class="no-results">No restaurants found</div>';
+                    return;
+                }
+                
+                restaurantsList.innerHTML = '';
+                
+                this.restaurants.forEach(restaurant => {
+                    const restaurantElement = this.createRestaurantElement(restaurant);
+                    restaurantsList.appendChild(restaurantElement);
+                });
+                
+                // Add edit buttons after rendering
+                if (window.addEditButtonsToRestaurants) {
+                    window.addEditButtonsToRestaurants();
+                }
+            }
+
+            createRestaurantElement(restaurant) {
+                const restaurantDiv = document.createElement('div');
+                restaurantDiv.className = 'restaurant-item';
+                restaurantDiv.setAttribute('data-restaurant-id', restaurant.id);
+                
+                const statusIcon = restaurant.status === 'Visited' ? '✅' : '⭕';
+                const likedIcon = restaurant.liked ? '❤️' : '♡';
+                
+                restaurantDiv.innerHTML = `
+                    <div class="restaurant-info">
+                        <div class="restaurant-header">
+                            <h3 class="restaurant-name">${restaurant.name}</h3>
+                            <div class="restaurant-actions">
+                                <button class="like-btn ${restaurant.liked ? 'liked' : ''}" 
+                                        onclick="toggleLiked(${restaurant.id}, ${!restaurant.liked})">
+                                    ${likedIcon}
+                                </button>
+                                <button class="status-btn" onclick="toggleStatus(${restaurant.id})">
+                                    ${statusIcon}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="restaurant-details">
+                            <div class="location">
+                                <span class="borough">${restaurant.borough || ''}</span>
+                                ${restaurant.neighborhood ? ` • ${restaurant.neighborhood}` : ''}
+                            </div>
+                            
+                            ${restaurant.cuisines && restaurant.cuisines.length ? 
+                                `<div class="cuisines">🍽️ ${restaurant.cuisines.join(', ')}</div>` : ''
+                            }
+                            
+                            ${restaurant.types && restaurant.types.length ? 
+                                `<div class="types">🏷️ ${restaurant.types.join(', ')}</div>` : ''
+                            }
+                            
+                            ${restaurant.what_to_order ? 
+                                `<div class="what-to-order">🍴 ${restaurant.what_to_order}</div>` : ''
+                            }
+                            
+                            ${restaurant.happy_hour ? 
+                                `<div class="happy-hour">🍻 ${restaurant.happy_hour}</div>` : ''
+                            }
+                            
+                            ${restaurant.notes ? 
+                                `<div class="notes">📝 ${restaurant.notes}</div>` : ''
+                            }
+                            
+                            ${restaurant.website_link ? 
+                                `<div class="website">
+                                    <a href="${restaurant.website_link}" target="_blank">🌐 Website</a>
+                                </div>` : ''
+                            }
+                        </div>
+                    </div>
+                `;
+                
+                return restaurantDiv;
+            }
+
+            updateResultsCount() {
+                const resultsCount = document.getElementById('results-count');
+                if (resultsCount) {
+                    resultsCount.textContent = `${this.restaurants.length} restaurant${this.restaurants.length !== 1 ? 's' : ''} found`;
+                }
+            }
+
+            handleFilterClick(filterBtn) {
+                const filterType = filterBtn.getAttribute('data-filter');
+                
+                // Remove active class from all buttons in this filter group
+                document.querySelectorAll(`[data-filter="${filterType}"]`).forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Add active class to clicked button
+                filterBtn.classList.add('active');
+                
+                // Apply all filters
+                applyFilters();
+            }
+
+            async handleAddRestaurant(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    name: document.getElementById('name').value.trim(),
+                    borough: document.getElementById('borough').value,
+                    neighborhood: document.getElementById('neighborhood').value.trim(),
+                    status: document.getElementById('status').value,
+                    happy_hour: document.getElementById('happy_hour').value.trim(),
+                    website_link: document.getElementById('website').value.trim(),
+                    what_to_order: document.getElementById('what_to_order').value.trim(),
+                    notes: document.getElementById('notes').value.trim(),
+                    latitude: this.parseFloat(document.getElementById('latitude').value),
+                    longitude: this.parseFloat(document.getElementById('longitude').value),
+                    cuisines: this.parseCommaSeparated(document.getElementById('cuisines').value),
+                    types: this.parseCommaSeparated(document.getElementById('types').value)
+                };
+
+                if (!formData.name) {
+                    this.showMessage('Restaurant name is required', 'error');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/api/restaurants', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to add restaurant');
+                    }
+
+                    this.showMessage('Restaurant added successfully!', 'success');
+                    document.getElementById('add-restaurant-form').reset();
+                    
+                    // Clear location helper fields and status
+                    document.getElementById('address-input').value = '';
+                    document.getElementById('maps-link-input').value = '';
+                    document.getElementById('location-status').style.display = 'none';
+                    
+                    // Refresh data
+                    await this.loadStats();
+                    await this.loadRestaurants();
+                    
+                    // Show stats if this is the first restaurant
+                    document.getElementById('stats-display').classList.remove('hidden');
+
+                } catch (error) {
+                    console.error('Error adding restaurant:', error);
+                    this.showMessage('Error adding restaurant: ' + error.message, 'error');
+                }
+            }
+
+            initializeMap() {
+                if (this.map) return; // Map already initialized
+
+                // Initialize map centered on NYC
+                this.map = L.map('restaurant-map').setView([40.7128, -74.0060], 11);
+
+                // Add OpenStreetMap tiles
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(this.map);
+
+                this.loadRestaurantsOnMap();
+            }
+
+            async loadRestaurantsOnMap() {
+                try {
+                    // Clear existing markers
+                    this.mapMarkers.forEach(marker => {
+                        this.map.removeLayer(marker);
+                    });
+                    this.mapMarkers = [];
+
+                    // Get current filters for map
+                    const queryParams = new URLSearchParams();
+                    Object.keys(this.currentFilters).forEach(key => {
+                        if (this.currentFilters[key]) {
+                            queryParams.append(key, this.currentFilters[key]);
+                        }
+                    });
+
+                    const response = await fetch(`/api/restaurants?${queryParams}`);
+                    const restaurants = await response.json();
+
+                    // Filter restaurants that have coordinates
+                    const restaurantsWithCoords = restaurants.filter(r => r.latitude && r.longitude);
+
+                    // Add markers for each restaurant
+                    restaurantsWithCoords.forEach(restaurant => {
+                        const marker = this.createRestaurantMarker(restaurant);
+                        marker.addTo(this.map);
+                        this.mapMarkers.push(marker);
+                    });
+
+                    // Update map count
+                    const mapCount = document.getElementById('map-count');
+                    if (mapCount) {
+                        mapCount.textContent = `${restaurantsWithCoords.length} restaurants on map`;
+                    }
+
+                } catch (error) {
+                    console.error('Error loading restaurants on map:', error);
+                    const mapCount = document.getElementById('map-count');
+                    if (mapCount) {
+                        mapCount.textContent = 'Error loading restaurants';
+                    }
+                }
+            }
+
+            createRestaurantMarker(restaurant) {
+                const statusIcon = restaurant.status === 'Visited' ? '✅' : '⭕';
+                const likedIcon = restaurant.liked ? '❤️' : '♡';
+                
+                // Choose marker color based on status and liked
+                let markerColor = '#6b7280'; // gray for unvisited
+                if (restaurant.status === 'Visited') {
+                    markerColor = restaurant.liked ? '#ef4444' : '#10b981'; // red for liked visited, green for visited
+                }
+
+                // Create custom icon
+                const icon = L.divIcon({
+                    html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>`,
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10],
+                    popupAnchor: [0, -10],
+                    className: 'custom-marker'
+                });
+
+                const marker = L.marker([restaurant.latitude, restaurant.longitude], { icon });
+
+                // Create popup content
+                const popupContent = `
+                    <div style="min-width: 200px;">
+                        <h3 style="margin: 0 0 8px 0; font-size: 16px; font-weight: 600;">${restaurant.name}</h3>
+                        <div style="margin-bottom: 8px; color: #6b7280; font-size: 14px;">
+                            <strong>${restaurant.borough || ''}</strong>
+                            ${restaurant.neighborhood ? ` • ${restaurant.neighborhood}` : ''}
+                        </div>
+                        <div style="margin-bottom: 8px; font-size: 14px;">
+                            ${statusIcon} ${restaurant.status} ${likedIcon}
+                        </div>
+                        ${restaurant.cuisines && restaurant.cuisines.length ? 
+                            `<div style="margin-bottom: 8px; font-size: 14px;">🍽️ ${restaurant.cuisines.join(', ')}</div>` : ''
+                        }
+                        ${restaurant.what_to_order ? 
+                            `<div style="margin-bottom: 8px; font-size: 14px;">🍴 ${restaurant.what_to_order}</div>` : ''
+                        }
+                        ${restaurant.website_link ? 
+                            `<div style="margin-bottom: 8px;">
+                                <a href="${restaurant.website_link}" target="_blank" style="color: #3b82f6; text-decoration: none;">🌐 Website</a>
+                            </div>` : ''
+                        }
+                        <div style="margin-top: 10px; display: flex; gap: 8px;">
+                            <button onclick="toggleLiked(${restaurant.id}, ${!restaurant.liked})" 
+                                    style="background: none; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 16px;">
+                                ${likedIcon}
+                            </button>
+                            <button onclick="toggleStatus(${restaurant.id})" 
+                                    style="background: none; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 16px;">
+                                ${statusIcon}
+                            </button>
+                            <button onclick="window.restaurantEditor.openEditModal(${restaurant.id})" 
+                                    style="background: #3b82f6; color: white; border: none; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 12px;">
+                                ✏️ Edit
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupContent);
+                return marker;
+            }
+
+            // Happy Hour functionality
+            initializeHappyHour() {
+                this.updateCurrentTime();
+                this.startTimeUpdates();
+                this.loadHappyHours();
+            }
+
+            startTimeUpdates() {
+                // Update time every minute
+                this.timeUpdateInterval = setInterval(() => {
+                    this.updateCurrentTime();
+                    this.loadHappyHours(); // Refresh to update "happening now" status
+                }, 60000);
+            }
+
+            updateCurrentTime() {
+                const now = new Date();
+                const options = { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    timeZone: 'America/New_York'
+                };
+                const timeString = now.toLocaleDateString('en-US', options);
+                
+                const currentTimeEl = document.getElementById('current-time');
+                if (currentTimeEl) {
+                    currentTimeEl.textContent = `${timeString} (NYC Time)`;
+                }
+            }
+
+            parseHappyHour(happyHourText) {
+                if (!happyHourText) return null;
+
+                const text = happyHourText.toLowerCase();
+                const days = [];
+                const times = [];
+                let hasFood = false;
+                let hasDrinks = false;
+
+                // Parse days
+                const dayMap = {
+                    'monday': 'monday', 'mon': 'monday',
+                    'tuesday': 'tuesday', 'tue': 'tuesday', 'tues': 'tuesday',
+                    'wednesday': 'wednesday', 'wed': 'wednesday',
+                    'thursday': 'thursday', 'thu': 'thursday', 'thur': 'thursday', 'thurs': 'thursday',
+                    'friday': 'friday', 'fri': 'friday',
+                    'saturday': 'saturday', 'sat': 'saturday',
+                    'sunday': 'sunday', 'sun': 'sunday'
+                };
+
+                // Check for day ranges
+                if (text.includes('weekday') || text.includes('mon-fri') || text.includes('monday-friday')) {
+                    days.push('weekday');
+                } else if (text.includes('weekend') || text.includes('sat-sun') || text.includes('saturday-sunday')) {
+                    days.push('weekend');
+                } else if (text.includes('daily') || text.includes('every day')) {
+                    days.push('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
+                } else {
+                    // Parse individual days
+                    Object.keys(dayMap).forEach(key => {
+                        if (text.includes(key)) {
+                            if (!days.includes(dayMap[key])) {
+                                days.push(dayMap[key]);
+                            }
+                        }
+                    });
+                }
+
+                // Parse times (simple regex for common formats)
+                const timeRegex = /(\d{1,2}):?(\d{2})?\s*(am|pm)?\s*-\s*(\d{1,2}):?(\d{2})?\s*(am|pm)/gi;
+                const timeMatches = text.match(timeRegex);
+                if (timeMatches) {
+                    times.push(...timeMatches);
+                }
+
+                // Check for food/drink keywords
+                const foodKeywords = ['food', 'appetizer', 'apps', 'small plates', 'bites', 'eats', 'pizza', 'tacos'];
+                const drinkKeywords = ['drinks', 'cocktail', 'beer', 'wine', 'spirits', 'shots', 'happy hour'];
+                
+                hasFood = foodKeywords.some(keyword => text.includes(keyword));
+                hasDrinks = drinkKeywords.some(keyword => text.includes(keyword)) || !hasFood; // assume drinks if no food mentioned
+
+                return {
+                    days: days.length > 0 ? days : ['unknown'],
+                    times: times,
+                    hasFood,
+                    hasDrinks,
+                    originalText: happyHourText
+                };
+            }
+
+            async loadHappyHours() {
+                try {
+                    // Get all restaurants with happy hours
+                    const response = await fetch('/api/restaurants?limit=1000');
+                    const allRestaurants = await response.json();
+                    
+                    // Filter restaurants that have happy hour info
+                    const restaurantsWithHH = allRestaurants.filter(r => r.happy_hour && r.happy_hour.trim());
+                    
+                    // Parse happy hour data
+                    const parsedRestaurants = restaurantsWithHH.map(restaurant => {
+                        const parsed = this.parseHappyHour(restaurant.happy_hour);
+                        return {
+                            ...restaurant,
+                            happyHourParsed: parsed
+                        };
+                    });
+
+                    // Apply filters
+                    const filteredRestaurants = this.filterHappyHours(parsedRestaurants);
+                    
+                    this.renderHappyHours(filteredRestaurants);
+                    this.updateHappyHourCounts(filteredRestaurants);
+
+                } catch (error) {
+                    console.error('Error loading happy hours:', error);
+                    document.getElementById('happy-hour-list').innerHTML = '<div class="error">Error loading happy hours</div>';
+                }
+            }
+
+            filterHappyHours(restaurants) {
+                return restaurants.filter(restaurant => {
+                    const hh = restaurant.happyHourParsed;
+                    if (!hh) return false;
+
+                    // Day filter
+                    const dayFilter = this.happyHourFilters.day;
+                    if (dayFilter) {
+                        if (dayFilter === 'weekday') {
+                            if (!hh.days.some(day => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(day)) &&
+                                !hh.days.includes('weekday')) {
+                                return false;
+                            }
+                        } else if (dayFilter === 'weekend') {
+                            if (!hh.days.some(day => ['saturday', 'sunday'].includes(day)) &&
+                                !hh.days.includes('weekend')) {
+                                return false;
+                            }
+                        } else {
+                            if (!hh.days.includes(dayFilter) && !hh.days.includes('weekday') && !hh.days.includes('weekend')) {
+                                return false;
+                            }
+                        }
+                    }
+
+                    // Borough filter
+                    if (this.happyHourFilters.borough && restaurant.borough !== this.happyHourFilters.borough) {
+                        return false;
+                    }
+
+                    // Cuisine filter
+                    if (this.happyHourFilters.cuisine) {
+                        if (!restaurant.cuisines || !restaurant.cuisines.includes(this.happyHourFilters.cuisine)) {
+                            return false;
+                        }
+                    }
+
+                    // Type filter (food vs drinks)
+                    if (this.happyHourFilters.type === 'food' && !hh.hasFood) {
+                        return false;
+                    }
+                    if (this.happyHourFilters.type === 'drinks' && !hh.hasDrinks) {
+                        return false;
+                    }
+
+                    // Time filter
+                    if (this.happyHourFilters.time === 'today') {
+                        const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                        if (!hh.days.includes(today) && !hh.days.includes('weekday') && !hh.days.includes('weekend')) {
+                            return false;
+                        }
+                    }
+                    // Note: "now" and "soon" filters would require more complex time parsing
+
+                    return true;
+                });
+            }
+
+            renderHappyHours(restaurants) {
+                const happyHourList = document.getElementById('happy-hour-list');
+                
+                if (restaurants.length === 0) {
+                    happyHourList.innerHTML = '<div class="no-results">No happy hours found with current filters</div>';
+                    return;
+                }
+
+                happyHourList.innerHTML = '';
+                
+                restaurants.forEach(restaurant => {
+                    const hhElement = this.createHappyHourElement(restaurant);
+                    happyHourList.appendChild(hhElement);
+                });
+            }
+
+            createHappyHourElement(restaurant) {
+                const hh = restaurant.happyHourParsed;
+                const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                
+                // Determine status
+                let status = 'other';
+                let statusText = 'Happy Hour Available';
+                
+                if (hh.days.includes(today) || 
+                    (hh.days.includes('weekday') && ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(today)) ||
+                    (hh.days.includes('weekend') && ['saturday', 'sunday'].includes(today))) {
+                    status = 'today';
+                    statusText = 'Today';
+                }
+
+                const element = document.createElement('div');
+                element.className = `happy-hour-item ${status === 'today' ? 'happening-today' : ''}`;
+                
+                element.innerHTML = `
+                    <div class="happy-hour-item-header">
+                        <h3 class="happy-hour-restaurant-name">${restaurant.name}</h3>
+                        <span class="happy-hour-status status-${status}">${statusText}</span>
+                    </div>
+                    
+                    <div class="happy-hour-location">
+                        📍 ${restaurant.borough || ''}${restaurant.neighborhood ? ` • ${restaurant.neighborhood}` : ''}
+                    </div>
+                    
+                    <div class="happy-hour-details">
+                        <div>
+                            <div class="happy-hour-time">
+                                🕐 ${hh.originalText}
+                            </div>
+                            ${restaurant.cuisines && restaurant.cuisines.length ? 
+                                `<div class="happy-hour-cuisines">🍽️ ${restaurant.cuisines.join(', ')}</div>` : ''
+                            }
+                        </div>
+                        <div>
+                            <div class="happy-hour-description">
+                                ${hh.hasFood && hh.hasDrinks ? '🍕🍻 Food & Drinks' : 
+                                  hh.hasFood ? '🍕 Food Specials' : 
+                                  hh.hasDrinks ? '🍻 Drink Specials' : 
+                                  '🍻 Happy Hour'}
+                            </div>
+                            <div class="day-tags">
+                                ${hh.days.map(day => 
+                                    `<span class="day-tag ${day === today ? 'active-today' : ''}">${this.capitalizeDayName(day)}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 15px;">
+                        <button onclick="window.restaurantEditor.openEditModal(${restaurant.id})" 
+                                class="btn btn-secondary">✏️ Edit</button>
+                        ${restaurant.website_link ? 
+                            `<a href="${restaurant.website_link}" target="_blank" class="btn btn-secondary">🌐 Website</a>` : ''
+                        }
+                        <button onclick="toggleLiked(${restaurant.id}, ${!restaurant.liked})" 
+                                class="btn ${restaurant.liked ? 'btn-danger' : 'btn-secondary'}">
+                            ${restaurant.liked ? '❤️ Liked' : '♡ Like'}
+                        </button>
+                    </div>
+                `;
+                
+                return element;
+            }
+
+            capitalizeDayName(day) {
+                if (day === 'weekday') return 'Weekdays';
+                if (day === 'weekend') return 'Weekends';
+                return day.charAt(0).toUpperCase() + day.slice(1);
+            }
+
+            updateHappyHourCounts(restaurants) {
+                const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+                const todayCount = restaurants.filter(r => {
+                    const hh = r.happyHourParsed;
+                    return hh && (hh.days.includes(today) || 
+                           (hh.days.includes('weekday') && ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(today)) ||
+                           (hh.days.includes('weekend') && ['saturday', 'sunday'].includes(today)));
+                }).length;
+
+                const happeningNowEl = document.getElementById('happening-now-count');
+                if (happeningNowEl) {
+                    happeningNowEl.textContent = `${todayCount} Today`;
+                }
+
+                const resultsCountEl = document.getElementById('happy-hour-results-count');
+                if (resultsCountEl) {
+                    resultsCountEl.textContent = `${restaurants.length} restaurant${restaurants.length !== 1 ? 's' : ''} with happy hour`;
+                }
+            }
+
+            parseFloat(value) {
+                const parsed = parseFloat(value);
+                return isNaN(parsed) ? null : parsed;
+            }
+
+            parseCommaSeparated(value) {
+                if (!value || !value.trim()) return [];
+                return value.split(',').map(item => item.trim()).filter(item => item);
+            }
+
+            showMessage(message, type = 'info') {
+                let messageArea = document.getElementById('message-area');
+                if (!messageArea) {
+                    messageArea = document.createElement('div');
+                    messageArea.id = 'message-area';
+                    document.body.appendChild(messageArea);
+                }
+
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message message-${type}`;
+                messageDiv.textContent = message;
+                
+                messageDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 12px 20px;
+                    border-radius: 4px;
+                    color: white;
+                    font-weight: 500;
+                    z-index: 1001;
+                    max-width: 400px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                `;
+
+                if (type === 'success') {
+                    messageDiv.style.backgroundColor = '#10b981';
+                } else if (type === 'error') {
+                    messageDiv.style.backgroundColor = '#ef4444';
+                } else {
+                    messageDiv.style.backgroundColor = '#3b82f6';
+                }
+
+                messageArea.appendChild(messageDiv);
+
+                setTimeout(() => {
+                    if (messageDiv.parentNode) {
+                        messageDiv.parentNode.removeChild(messageDiv);
+                    }
+                }, 4000);
+            }
+
+            async geocodeAddress(isEdit = false) {
+                const addressInput = document.getElementById(isEdit ? 'edit-address-input' : 'address-input');
+                const latitudeInput = document.getElementById(isEdit ? 'edit-latitude' : 'latitude');
+                const longitudeInput = document.getElementById(isEdit ? 'edit-longitude' : 'longitude');
+                const statusDiv = document.getElementById(isEdit ? 'edit-location-status' : 'location-status');
+                
+                const address = addressInput.value.trim();
+                if (!address) {
+                    this.showLocationStatus('Please enter an address or restaurant name', 'error', statusDiv);
+                    return;
+                }
+
+                this.showLocationStatus('🔍 Searching for location...', 'info', statusDiv);
+
+                try {
+                    // Use Nominatim (free OpenStreetMap geocoding)
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', New York City, NY')}&limit=1&addressdetails=1`);
+                    const results = await response.json();
+
+                    if (results && results.length > 0) {
+                        const result = results[0];
+                        const lat = parseFloat(result.lat);
+                        const lng = parseFloat(result.lon);
+
+                        latitudeInput.value = lat;
+                        longitudeInput.value = lng;
+
+                        this.showLocationStatus(`✅ Found: ${result.display_name}`, 'success', statusDiv);
+                        
+                        // Clear the address input since we got the coordinates
+                        addressInput.value = '';
+                    } else {
+                        this.showLocationStatus('❌ Location not found. Try being more specific or use manual coordinates.', 'error', statusDiv);
+                    }
+                } catch (error) {
+                    console.error('Geocoding error:', error);
+                    this.showLocationStatus('❌ Error searching for location. Please try manual coordinates.', 'error', statusDiv);
+                }
+            }
+
+            parseGoogleMapsLink(isEdit = false) {
+                const linkInput = document.getElementById(isEdit ? 'edit-maps-link-input' : 'maps-link-input');
+                const latitudeInput = document.getElementById(isEdit ? 'edit-latitude' : 'latitude');
+                const longitudeInput = document.getElementById(isEdit ? 'edit-longitude' : 'longitude');
+                const statusDiv = document.getElementById(isEdit ? 'edit-location-status' : 'location-status');
+                
+                const link = linkInput.value.trim();
+                if (!link) {
+                    this.showLocationStatus('Please paste a Google Maps link', 'error', statusDiv);
+                    return;
+                }
+
+                try {
+                    let lat, lng;
+
+                    // Try different Google Maps URL formats
+                    // Format 1: @lat,lng,zoom
+                    let match = link.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                    if (match) {
+                        lat = parseFloat(match[1]);
+                        lng = parseFloat(match[2]);
+                    } else {
+                        // Format 2: !3d lat !4d lng
+                        const latMatch = link.match(/!3d(-?\d+\.?\d*)/);
+                        const lngMatch = link.match(/!4d(-?\d+\.?\d*)/);
+                        if (latMatch && lngMatch) {
+                            lat = parseFloat(latMatch[1]);
+                            lng = parseFloat(lngMatch[1]);
+                        } else {
+                            // Format 3: q=lat,lng
+                            match = link.match(/q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+                            if (match) {
+                                lat = parseFloat(match[1]);
+                                lng = parseFloat(match[2]);
+                            }
+                        }
+                    }
+
+                    if (lat && lng) {
+                        latitudeInput.value = lat;
+                        longitudeInput.value = lng;
+                        this.showLocationStatus(`✅ Coordinates extracted: ${lat}, ${lng}`, 'success', statusDiv);
+                        
+                        // Clear the link input
+                        linkInput.value = '';
+                    } else {
+                        this.showLocationStatus('❌ Could not extract coordinates from this link. Please try a different Google Maps link.', 'error', statusDiv);
+                    }
+                } catch (error) {
+                    console.error('Link parsing error:', error);
+                    this.showLocationStatus('❌ Error parsing Google Maps link.', 'error', statusDiv);
+                }
+            }
+
+            showLocationStatus(message, type, statusDiv) {
+                if (!statusDiv) return;
+                
+                statusDiv.style.display = 'block';
+                statusDiv.textContent = message;
+                
+                // Style based on type
+                if (type === 'success') {
+                    statusDiv.style.backgroundColor = '#d1fae5';
+                    statusDiv.style.color = '#065f46';
+                    statusDiv.style.border = '1px solid #a7f3d0';
+                } else if (type === 'error') {
+                    statusDiv.style.backgroundColor = '#fee2e2';
+                    statusDiv.style.color = '#991b1b';
+                    statusDiv.style.border = '1px solid #fca5a5';
+                } else {
+                    statusDiv.style.backgroundColor = '#dbeafe';
+                    statusDiv.style.color = '#1e40af';
+                    statusDiv.style.border = '1px solid #93c5fd';
+                }
+
+                // Auto-hide success messages
+                if (type === 'success') {
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                }
+            }
+        }
+
+        // Restaurant Editor Class
+        class RestaurantEditor {
+            constructor() {
+                this.currentRestaurantId = null;
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('close-edit-modal')?.addEventListener('click', () => this.closeEditModal());
+                document.getElementById('cancel-edit')?.addEventListener('click', () => this.closeEditModal());
+                document.querySelector('.modal-overlay')?.addEventListener('click', () => this.closeEditModal());
+                document.getElementById('edit-restaurant-form')?.addEventListener('submit', (e) => this.handleEditSubmit(e));
+                document.getElementById('delete-restaurant')?.addEventListener('click', () => this.handleDelete());
+                
+                // Location helper buttons for edit modal
+                document.getElementById('edit-geocode-btn')?.addEventListener('click', () => {
+                    if (window.restaurantApp) {
+                        window.restaurantApp.geocodeAddress(true);
+                    }
+                });
+                document.getElementById('edit-parse-link-btn')?.addEventListener('click', () => {
+                    if (window.restaurantApp) {
+                        window.restaurantApp.parseGoogleMapsLink(true);
+                    }
+                });
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && !document.getElementById('edit-modal').classList.contains('hidden')) {
+                        this.closeEditModal();
+                    }
+                });
+            }
+
+            async openEditModal(restaurantId) {
+                try {
+                    this.currentRestaurantId = restaurantId;
+                    
+                    const modal = document.getElementById('edit-modal');
+                    modal.classList.remove('hidden');
+                    
+                    const response = await fetch(`/api/restaurants/${restaurantId}`);
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch restaurant data');
+                    }
+                    
+                    const restaurant = await response.json();
+                    this.populateEditForm(restaurant);
+                    
+                } catch (error) {
+                    console.error('Error opening edit modal:', error);
+                    this.showMessage('Error loading restaurant data', 'error');
+                    this.closeEditModal();
+                }
+            }
+
+            populateEditForm(restaurant) {
+                document.getElementById('edit-restaurant-id').value = restaurant.id;
+                document.getElementById('edit-name').value = restaurant.name || '';
+                document.getElementById('edit-borough').value = restaurant.borough || '';
+                document.getElementById('edit-neighborhood').value = restaurant.neighborhood || '';
+                document.getElementById('edit-status').value = restaurant.status || 'Unvisited';
+                document.getElementById('edit-types').value = restaurant.types ? restaurant.types.join(', ') : '';
+                document.getElementById('edit-cuisines').value = restaurant.cuisines ? restaurant.cuisines.join(', ') : '';
+                document.getElementById('edit-latitude').value = restaurant.latitude || '';
+                document.getElementById('edit-longitude').value = restaurant.longitude || '';
+                document.getElementById('edit-happy-hour').value = restaurant.happy_hour || '';
+                document.getElementById('edit-website').value = restaurant.website_link || '';
+                document.getElementById('edit-what-to-order').value = restaurant.what_to_order || '';
+                document.getElementById('edit-notes').value = restaurant.notes || '';
+                document.getElementById('edit-liked').checked = restaurant.liked;
+            }
+
+            closeEditModal() {
+                document.getElementById('edit-modal').classList.add('hidden');
+                this.currentRestaurantId = null;
+                document.getElementById('edit-restaurant-form').reset();
+                
+                // Clear location helper fields and status
+                document.getElementById('edit-address-input').value = '';
+                document.getElementById('edit-maps-link-input').value = '';
+                document.getElementById('edit-location-status').style.display = 'none';
+            }
+
+            async handleEditSubmit(e) {
+                e.preventDefault();
+                
+                if (!this.currentRestaurantId) {
+                    this.showMessage('No restaurant selected for editing', 'error');
+                    return;
+                }
+
+                try {
+                    const formData = {
+                        name: document.getElementById('edit-name').value.trim(),
+                        borough: document.getElementById('edit-borough').value,
+                        neighborhood: document.getElementById('edit-neighborhood').value.trim(),
+                        status: document.getElementById('edit-status').value,
+                        liked: document.getElementById('edit-liked').checked,
+                        happy_hour: document.getElementById('edit-happy-hour').value.trim(),
+                        website_link: document.getElementById('edit-website').value.trim(),
+                        what_to_order: document.getElementById('edit-what-to-order').value.trim(),
+                        notes: document.getElementById('edit-notes').value.trim(),
+                        latitude: this.parseFloat(document.getElementById('edit-latitude').value),
+                        longitude: this.parseFloat(document.getElementById('edit-longitude').value),
+                        cuisines: this.parseCommaSeparated(document.getElementById('edit-cuisines').value),
+                        types: this.parseCommaSeparated(document.getElementById('edit-types').value)
+                    };
+
+                    if (!formData.name) {
+                        this.showMessage('Restaurant name is required', 'error');
+                        return;
+                    }
+
+                    const response = await fetch(`/api/restaurants/${this.currentRestaurantId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to update restaurant');
+                    }
+
+                    this.showMessage('Restaurant updated successfully!', 'success');
+                    this.closeEditModal();
+                    
+                    // Refresh the restaurant list
+                    if (window.restaurantApp) {
+                        await window.restaurantApp.loadStats();
+                        await window.restaurantApp.loadRestaurants();
+                        
+                        // Also refresh map if it's initialized
+                        if (window.restaurantApp.map) {
+                            await window.restaurantApp.loadRestaurantsOnMap();
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error updating restaurant:', error);
+                    this.showMessage('Error updating restaurant: ' + error.message, 'error');
+                }
+            }
+
+            async handleDelete() {
+                if (!this.currentRestaurantId) return;
+
+                const restaurantName = document.getElementById('edit-name').value;
+                if (!confirm(`Are you sure you want to delete "${restaurantName}"? This action cannot be undone.`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/restaurants/${this.currentRestaurantId}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Failed to delete restaurant');
+                    }
+
+                    this.showMessage('Restaurant deleted successfully!', 'success');
+                    this.closeEditModal();
+                    
+                    if (window.restaurantApp) {
+                        await window.restaurantApp.loadStats();
+                        await window.restaurantApp.loadRestaurants();
+                        
+                        // Also refresh map if it's initialized
+                        if (window.restaurantApp.map) {
+                            await window.restaurantApp.loadRestaurantsOnMap();
+                        }
+                    }
+
+                } catch (error) {
+                    console.error('Error deleting restaurant:', error);
+                    this.showMessage('Error deleting restaurant: ' + error.message, 'error');
+                }
+            }
+
+            parseFloat(value) {
+                const parsed = parseFloat(value);
+                return isNaN(parsed) ? null : parsed;
+            }
+
+            parseCommaSeparated(value) {
+                if (!value || !value.trim()) return [];
+                return value.split(',').map(item => item.trim()).filter(item => item);
+            }
+
+            showMessage(message, type = 'info') {
+                if (window.restaurantApp) {
+                    window.restaurantApp.showMessage(message, type);
+                }
+            }
+
+            addEditButtonToRestaurant(restaurantElement, restaurantId) {
+                if (restaurantElement.querySelector('.edit-restaurant-btn')) {
+                    return;
+                }
+
+                const editButton = document.createElement('button');
+                editButton.className = 'edit-restaurant-btn';
+                editButton.textContent = '✏️ Edit';
+                editButton.onclick = (e) => {
+                    e.stopPropagation();
+                    this.openEditModal(restaurantId);
+                };
+
+                const restaurantActions = restaurantElement.querySelector('.restaurant-actions');
+                if (restaurantActions) {
+                    restaurantActions.appendChild(editButton);
+                }
+            }
+        }
+
+        // Global functions
+        function applyFilters() {
+            if (window.restaurantApp) {
+                // Get dropdown values
+                const cuisineFilter = document.getElementById('cuisine-filter').value;
+                const neighborhoodFilter = document.getElementById('neighborhood-filter').value;
+                const boroughFilter = document.getElementById('borough-filter').value;
+                const typeFilter = document.getElementById('type-filter').value;
+
+                // Update filters object
+                window.restaurantApp.currentFilters = {};
+                
+                if (cuisineFilter) {
+                    window.restaurantApp.currentFilters.cuisines = cuisineFilter;
+                }
+                if (neighborhoodFilter) {
+                    window.restaurantApp.currentFilters.neighborhoods = neighborhoodFilter;
+                }
+                if (boroughFilter) {
+                    window.restaurantApp.currentFilters.boroughs = boroughFilter;
+                }
+                if (typeFilter) {
+                    window.restaurantApp.currentFilters.types = typeFilter;
+                }
+
+                // Get button filter values
+                const activeStatusBtn = document.querySelector('[data-filter="status"].active');
+                const activeLikedBtn = document.querySelector('[data-filter="liked"].active');
+                
+                if (activeStatusBtn && activeStatusBtn.getAttribute('data-value')) {
+                    window.restaurantApp.currentFilters.status = activeStatusBtn.getAttribute('data-value');
+                }
+                if (activeLikedBtn && activeLikedBtn.getAttribute('data-value')) {
+                    window.restaurantApp.currentFilters.liked = activeLikedBtn.getAttribute('data-value');
+                }
+
+                window.restaurantApp.loadRestaurants();
+            }
+        }
+
+        function showView(viewName) {
+            // Update nav buttons
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Clean up previous view timers
+            if (window.restaurantApp && window.restaurantApp.timeUpdateInterval) {
+                clearInterval(window.restaurantApp.timeUpdateInterval);
+                window.restaurantApp.timeUpdateInterval = null;
+            }
+            
+            // Hide all views
+            document.querySelectorAll('#database-view, #map-view, #happyhour-view, #add-view, #stats-view').forEach(view => {
+                view.classList.add('hidden');
+            });
+            
+            // Show selected view
+            document.getElementById(`${viewName}-view`).classList.remove('hidden');
+            
+            // Initialize based on view
+            if (viewName === 'map' && window.restaurantApp) {
+                setTimeout(() => {
+                    window.restaurantApp.initializeMap();
+                }, 100);
+            } else if (viewName === 'happyhour' && window.restaurantApp) {
+                setTimeout(() => {
+                    window.restaurantApp.initializeHappyHour();
+                }, 100);
+            }
+        }
+
+        function toggleFilters() {
+            const filters = document.getElementById('filters');
+            const btn = event.target;
+            
+            if (filters.classList.contains('show')) {
+                filters.classList.remove('show');
+                btn.textContent = 'Show Filters';
+            } else {
+                filters.classList.add('show');
+                btn.textContent = 'Hide Filters';
+            }
+        }
+
+        function clearAllFilters() {
+            // Reset all dropdowns
+            document.getElementById('cuisine-filter').value = '';
+            document.getElementById('neighborhood-filter').value = '';
+            document.getElementById('borough-filter').value = '';
+            document.getElementById('type-filter').value = '';
+            
+            // Reset all filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-value') === '') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Clear filters and reload
+            if (window.restaurantApp) {
+                window.restaurantApp.currentFilters = {};
+                window.restaurantApp.loadRestaurants();
+            }
+        }
+
+        function applyMapFilters() {
+            if (window.restaurantApp) {
+                // Get dropdown values for map
+                const boroughFilter = document.getElementById('map-borough-filter').value;
+                const cuisineFilter = document.getElementById('map-cuisine-filter').value;
+
+                // Update filters object
+                window.restaurantApp.currentFilters = {};
+                
+                if (boroughFilter) {
+                    window.restaurantApp.currentFilters.boroughs = boroughFilter;
+                }
+                if (cuisineFilter) {
+                    window.restaurantApp.currentFilters.cuisines = cuisineFilter;
+                }
+
+                // Get button filter values for map
+                const activeStatusBtn = document.querySelector('#map-view [data-filter="status"].active');
+                const activeLikedBtn = document.querySelector('#map-view [data-filter="liked"].active');
+                
+                if (activeStatusBtn && activeStatusBtn.getAttribute('data-value')) {
+                    window.restaurantApp.currentFilters.status = activeStatusBtn.getAttribute('data-value');
+                }
+                if (activeLikedBtn && activeLikedBtn.getAttribute('data-value')) {
+                    window.restaurantApp.currentFilters.liked = activeLikedBtn.getAttribute('data-value');
+                }
+
+                window.restaurantApp.loadRestaurantsOnMap();
+            }
+        }
+
+        function handleMapFilterClick(filterBtn) {
+            const filterType = filterBtn.getAttribute('data-filter');
+            
+            // Remove active class from all buttons in this filter group within the map view
+            document.querySelectorAll(`#map-view [data-filter="${filterType}"]`).forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            filterBtn.classList.add('active');
+            
+            // Apply map filters
+            applyMapFilters();
+        }
+
+        function clearMapFilters() {
+            // Reset map dropdowns
+            document.getElementById('map-borough-filter').value = '';
+            document.getElementById('map-cuisine-filter').value = '';
+            
+            // Reset map filter buttons
+            document.querySelectorAll('#map-view .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-value') === '') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Clear filters and reload map
+            if (window.restaurantApp) {
+                window.restaurantApp.currentFilters = {};
+                window.restaurantApp.loadRestaurantsOnMap();
+            }
+        }
+
+        function findUserLocation() {
+            if (!navigator.geolocation) {
+                alert('Geolocation is not supported by this browser.');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    if (window.restaurantApp && window.restaurantApp.map) {
+                        // Add user location marker
+                        const userMarker = L.marker([lat, lng], {
+                            icon: L.divIcon({
+                                html: '<div style="background-color: #3b82f6; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);"></div>',
+                                iconSize: [20, 20],
+                                iconAnchor: [10, 10],
+                                className: 'user-location-marker'
+                            })
+                        }).addTo(window.restaurantApp.map);
+                        
+                        userMarker.bindPopup('📍 Your Location').openPopup();
+                        
+                        // Center map on user location
+                        window.restaurantApp.map.setView([lat, lng], 14);
+                    }
+                },
+                function(error) {
+                    let message = 'Unable to retrieve your location: ';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message += 'Location access denied by user.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message += 'Location information is unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            message += 'Location request timed out.';
+                            break;
+                        default:
+                            message += 'An unknown error occurred.';
+                            break;
+                    }
+                    alert(message);
+                }
+            );
+        }
+
+        // Happy Hour filter functions
+        function applyHappyHourFilters() {
+            if (window.restaurantApp) {
+                const dayFilter = document.getElementById('day-filter').value;
+                const boroughFilter = document.getElementById('hh-borough-filter').value;
+                const cuisineFilter = document.getElementById('hh-cuisine-filter').value;
+
+                window.restaurantApp.happyHourFilters = {};
+                
+                if (dayFilter) {
+                    window.restaurantApp.happyHourFilters.day = dayFilter;
+                }
+                if (boroughFilter) {
+                    window.restaurantApp.happyHourFilters.borough = boroughFilter;
+                }
+                if (cuisineFilter) {
+                    window.restaurantApp.happyHourFilters.cuisine = cuisineFilter;
+                }
+
+                // Get button filter values
+                const activeTimeBtn = document.querySelector('#happyhour-view [data-filter="time"].active');
+                const activeTypeBtn = document.querySelector('#happyhour-view [data-filter="type"].active');
+                
+                if (activeTimeBtn && activeTimeBtn.getAttribute('data-value')) {
+                    window.restaurantApp.happyHourFilters.time = activeTimeBtn.getAttribute('data-value');
+                }
+                if (activeTypeBtn && activeTypeBtn.getAttribute('data-value')) {
+                    window.restaurantApp.happyHourFilters.type = activeTypeBtn.getAttribute('data-value');
+                }
+
+                window.restaurantApp.loadHappyHours();
+            }
+        }
+
+        function handleHHFilterClick(filterBtn) {
+            const filterType = filterBtn.getAttribute('data-filter');
+            
+            // Remove active class from all buttons in this filter group within the happy hour view
+            document.querySelectorAll(`#happyhour-view [data-filter="${filterType}"]`).forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            filterBtn.classList.add('active');
+            
+            // Apply happy hour filters
+            applyHappyHourFilters();
+        }
+
+        function clearHappyHourFilters() {
+            // Reset dropdowns
+            document.getElementById('day-filter').value = '';
+            document.getElementById('hh-borough-filter').value = '';
+            document.getElementById('hh-cuisine-filter').value = '';
+            
+            // Reset filter buttons
+            document.querySelectorAll('#happyhour-view .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('data-value') === '') {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Clear filters and reload
+            if (window.restaurantApp) {
+                window.restaurantApp.happyHourFilters = {};
+                window.restaurantApp.loadHappyHours();
+            }
+        }
+
+        async function toggleLiked(restaurantId, liked) {
+            try {
+                const response = await fetch(`/api/restaurants/${restaurantId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ liked })
+                });
+                
+                if (response.ok && window.restaurantApp) {
+                    await window.restaurantApp.loadStats();
+                    await window.restaurantApp.loadRestaurants();
+                    
+                    // Also refresh map if it's initialized
+                    if (window.restaurantApp.map) {
+                        await window.restaurantApp.loadRestaurantsOnMap();
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating liked status:', error);
+            }
+        }
+
+        async function toggleStatus(restaurantId) {
+            try {
+                const getResponse = await fetch(`/api/restaurants/${restaurantId}`);
+                const restaurant = await getResponse.json();
+                
+                const newStatus = restaurant.status === 'Visited' ? 'Unvisited' : 'Visited';
+                
+                const response = await fetch(`/api/restaurants/${restaurantId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (response.ok && window.restaurantApp) {
+                    await window.restaurantApp.loadStats();
+                    await window.restaurantApp.loadRestaurants();
+                    
+                    // Also refresh map if it's initialized
+                    if (window.restaurantApp.map) {
+                        await window.restaurantApp.loadRestaurantsOnMap();
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+            }
+        }
+
+        function addEditButtonsToRestaurants() {
+            const restaurantItems = document.querySelectorAll('[data-restaurant-id]');
+            restaurantItems.forEach(item => {
+                const restaurantId = item.getAttribute('data-restaurant-id');
+                if (restaurantId && window.restaurantEditor) {
+                    window.restaurantEditor.addEditButtonToRestaurant(item, restaurantId);
+                }
+            });
+        }
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.restaurantApp = new RestaurantApp();
+            window.restaurantEditor = new RestaurantEditor();
+            window.addEditButtonsToRestaurants = addEditButtonsToRestaurants;
+            
+            // Mobile optimizations
+            initializeMobileFeatures();
+        });
+
+        function initializeMobileFeatures() {
+            // Prevent double-tap zoom on buttons
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // Handle mobile keyboard hiding/showing
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', () => {
+                    // Adjust modal height when keyboard appears
+                    const modal = document.querySelector('.modal:not(.hidden)');
+                    if (modal) {
+                        const modalContent = modal.querySelector('.modal-content');
+                        if (modalContent) {
+                            modalContent.style.maxHeight = `${window.visualViewport.height * 0.9}px`;
+                        }
+                    }
+                });
+            }
+
+            // Add pull-to-refresh functionality (simple version)
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            const pullThreshold = 100;
+
+            document.addEventListener('touchstart', (e) => {
+                if (window.scrollY === 0) {
+                    startY = e.touches[0].pageY;
+                }
+            });
+
+            document.addEventListener('touchmove', (e) => {
+                if (window.scrollY === 0 && startY) {
+                    currentY = e.touches[0].pageY;
+                    pullDistance = currentY - startY;
+                    
+                    if (pullDistance > 0 && pullDistance < pullThreshold) {
+                        // Visual feedback could be added here
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            document.addEventListener('touchend', () => {
+                if (pullDistance > pullThreshold && window.restaurantApp) {
+                    // Refresh current view
+                    if (window.restaurantApp.currentView === 'database') {
+                        window.restaurantApp.loadRestaurants();
+                    } else if (window.restaurantApp.currentView === 'happyhour') {
+                        window.restaurantApp.loadHappyHours();
+                    }
+                }
+                startY = 0;
+                pullDistance = 0;
+            });
+
+            // Optimize touch scrolling
+            document.addEventListener('touchmove', function(e) {
+                // Allow scrolling within scrollable containers
+                const target = e.target.closest('.modal-content, #restaurants-list, #happy-hour-list');
+                if (!target) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        }
+    </script>
+</body>
+</html>
