@@ -1,0 +1,28 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#2563eb"/>
+  
+  <!-- Main icon content - Restaurant/Location pin -->
+  <g transform="translate(256, 256)">
+    <!-- Location pin shape -->
+    <path d="M-60,-80 C-60,-120 -30,-150 20,-150 C70,-150 100,-120 100,-80 C100,-40 20,60 20,60 C20,60 -60,-40 -60,-80 Z" 
+          fill="#ffffff" stroke="none"/>
+    
+    <!-- Inner circle for restaurant symbol -->
+    <circle cx="20" cy="-80" r="35" fill="#2563eb"/>
+    
+    <!-- Fork and knife -->
+    <g transform="translate(20, -80)">
+      <!-- Fork -->
+      <path d="M-12,-15 L-12,15 M-15,-15 L-15,-5 M-9,-15 L-9,-5" 
+            stroke="#ffffff" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <!-- Knife -->
+      <path d="M8,-15 L8,15 M5,-15 L11,-15 L11,-10" 
+            stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+    
+    <!-- Happy hour accent -->
+    <circle cx="85" cy="-40" r="15" fill="#fbbf24"/>
+    <text x="85" y="-35" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="16" font-weight="bold">H</text>
+  </g>
+</svg>

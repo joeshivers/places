@@ -1,0 +1,9 @@
+<svg width="152" height="152" viewBox="0 0 152 152" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="76" cy="76" r="76" fill="#2563eb"/>
+    <g transform="translate(76, 76)">
+      <path d="M-18.24,-24.32 C-18.24,-36.48 -9.12,-45.6 6.08,-45.6 C21.28,-45.6 30.400000000000002,-36.48 30.400000000000002,-24.32 C30.400000000000002,-12.16 6.08,18.24 6.08,18.24 C6.08,18.24 -18.24,-12.16 -18.24,-24.32 Z" 
+            fill="#ffffff" stroke="none"/>
+      <circle cx="6.08" cy="-24.32" r="10.64" fill="#2563eb"/>
+      <text x="6.08" y="-19.76" text-anchor="middle" fill="#ffffff" font-family="Arial" font-size="12.16" font-weight="bold">P</text>
+    </g>
+  </svg>
